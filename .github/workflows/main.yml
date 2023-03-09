@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Get current repository name
-        id: info
-        uses: actions/github-script@v3.1
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          result-encoding: string
-          script: |
-            return context.repo.repo;
+#       - name: Get current repository name
+#         id: info
+#         uses: actions/github-script@v3.1
+#         with:
+#           github-token: ${{secrets.GITHUB_TOKEN}}
+#           result-encoding: string
+#           script: |
+#             return context.repo.repo;
           
       - name: Mirror the GitHub repos to Gitee
         uses: Yikun/hub-mirror-action@v0.13
@@ -33,6 +33,6 @@ jobs:
           dst: gitee/susususutie
           dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
           dst_token: ${{ secrets.GITEE_TOKEN }}
-          static_list: '${{ steps.info.outputs.result }}'
+          static_list: 'pacman'
           account_type: user
           force_update: true
