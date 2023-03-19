@@ -1,8 +1,10 @@
+type GameOption = {}
+
 /*
  * 小型游戏引擎
  */
 class Game {
-  constructor(id, params) {
+  constructor(id: string, params?: GameOption) {
     var _ = this;
     var settings = {
       width: 960,
