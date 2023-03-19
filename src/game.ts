@@ -1,81 +1,31 @@
-type GameOption = {}
+type GameOption = {};
 
 /*
  * 小型游戏引擎
  */
 class Game {
+  /** 画布宽度 */
+  width: number;
+  /** 画布高度 */
+  height: number;
+
   constructor(id: string, params?: GameOption) {
-    var _ = this;
-    var settings = {
-      width: 960,
-      height: 640, //画布高度
-    };
-    Object.assign(_, settings, params);
-    var $canvas = document.getElementById(id);
-    $canvas.width = _.width;
-    $canvas.height = _.height;
-    var _context = $canvas.getContext("2d"); //画布上下文环境
+    const { width, height } = { width: 960, height: 640, ...params };
+    this.width = width;
+    this.height = height;
+
+    const thisGame = this;
+    const $canvas = document.querySelector<HTMLCanvasElement>(`#${id}`);
+    if (!$canvas) throw new Error("没有找到canvan元素");
+
+    $canvas.width = this.width;
+    $canvas.height = this.height;
+    const _context = $canvas.getContext("2d")!; //画布上下文环境
     var _stages = []; //布景对象队列
-    var _events = {}; //事件集合
+    var g_events = {}; //事件集合
     var _index = 0, //当前布景索引
       _hander; //帧动画控制
 
-    //活动对象构造
-    class Item {
-      constructor(params) {
-        this._params = params || {};
-        this._id = 0; //标志符
-        this._stage = null; //与所属布景绑定
-        this._settings = {
-          x: 0,
-          y: 0,
-          width: 20,
-          height: 20,
-          type: 0,
-          color: "#F00",
-          status: 1,
-          orientation: 0,
-          speed: 0,
-
-          //地图相关
-          location: null,
-          coord: null,
-          path: [],
-          vector: null,
-
-          //布局相关
-          frames: 1,
-          times: 0,
-          timeout: 0,
-          control: {},
-          update: function () { },
-          draw: function () { }, //绘制
-        };
-        Object.assign(this, this._settings, this._params);
-      }
-      bind(eventType, callback) {
-        if (!_events[eventType]) {
-          _events[eventType] = {};
-          $canvas.addEventListener(eventType, function (e) {
-            var position = _.getPosition(e);
-            _stages[_index].items.forEach(function (item) {
-              if (item.x <= position.x &&
-                position.x <= item.x + item.width &&
-                item.y <= position.y &&
-                position.y <= item.y + item.height) {
-                var key = "s" + _index + "i" + item._id;
-                if (_events[eventType][key]) {
-                  _events[eventType][key](e);
-                }
-              }
-            });
-            e.preventDefault();
-          });
-        }
-        _events[eventType]["s" + this._stage.index + "i" + this._id] =
-          callback.bind(this); //绑定作用域
-      }
-    }
     //地图对象构造器
     class Map {
       constructor(params) {
@@ -92,8 +42,8 @@ class Game {
           frames: 1,
           times: 0,
           cache: false,
-          update: function () { },
-          draw: function () { }, //绘制地图
+          update: function () {},
+          draw: function () {}, //绘制地图
         };
         Object.assign(this, this._settings, this._params);
       }
@@ -136,8 +86,10 @@ class Game {
           type: "path",
         };
         var options = Object.assign({}, defaults, params);
-        if (options.map[options.start.y][options.start.x] ||
-          options.map[options.end.y][options.end.x]) {
+        if (
+          options.map[options.start.y][options.start.x] ||
+          options.map[options.end.y][options.end.x]
+        ) {
           //当起点或终点设置在墙上
           return [];
         }
@@ -204,7 +156,10 @@ class Game {
         if (finded) {
           var current = options.end;
           if (options.type == "path") {
-            while (current.x != options.start.x || current.y != options.start.y) {
+            while (
+              current.x != options.start.x ||
+              current.y != options.start.y
+            ) {
               result.unshift(current);
               current = steps[current.y][current.x];
             }
@@ -230,13 +185,13 @@ class Game {
           images: [],
           items: [],
           timeout: 0,
-          update: function () { }, //嗅探,处理布局下不同对象的相对关系
+          update: function () {}, //嗅探,处理布局下不同对象的相对关系
         };
         Object.assign(this, this._settings, this._params);
       }
       //添加对象
       createItem(options) {
-        var item = new Item(options);
+        var item = new Item({ ...options, stage: this });
         //动态属性
         if (item.location) {
           Object.assign(
@@ -302,17 +257,17 @@ class Game {
       }
       //绑定事件
       bind(eventType, callback) {
-        if (!_events[eventType]) {
-          _events[eventType] = {};
+        if (!g_events[eventType]) {
+          g_events[eventType] = {};
           window.addEventListener(eventType, function (e) {
             var key = "s" + _index;
-            if (_events[eventType][key]) {
-              _events[eventType][key](e);
+            if (g_events[eventType][key]) {
+              g_events[eventType][key](e);
             }
             e.preventDefault();
           });
         }
-        _events[eventType]["s" + this.index] = callback.bind(this); //绑定事件作用域
+        g_events[eventType]["s" + this.index] = callback.bind(this); //绑定事件作用域
       }
     }
     //动画开始
@@ -328,9 +283,9 @@ class Game {
         }
         timestamp = now;
         var stage = _stages[_index];
-        _context.clearRect(0, 0, _.width, _.height); //清除画布
+        _context.clearRect(0, 0, thisGame.width, thisGame.height); //清除画布
         _context.fillStyle = "#000000";
-        _context.fillRect(0, 0, _.width, _.height);
+        _context.fillRect(0, 0, thisGame.width, thisGame.height);
         f++;
         if (stage.timeout) {
           stage.timeout--;
@@ -345,7 +300,12 @@ class Game {
               if (!map.imageData) {
                 _context.save();
                 map.draw(_context);
-                map.imageData = _context.getImageData(0, 0, _.width, _.height);
+                map.imageData = _context.getImageData(
+                  0,
+                  0,
+                  thisGame.width,
+                  thisGame.height
+                );
                 _context.restore();
               } else {
                 _context.putImageData(map.imageData, 0, 0);
@@ -384,8 +344,8 @@ class Game {
     this.getPosition = function (e) {
       var box = $canvas.getBoundingClientRect();
       return {
-        x: e.clientX - box.left * (_.width / box.width),
-        y: e.clientY - box.top * (_.height / box.height),
+        x: e.clientX - box.left * (thisGame.width / box.width),
+        y: e.clientY - box.top * (thisGame.height / box.height),
       };
     };
     //创建布景
@@ -424,3 +384,58 @@ class Game {
 }
 
 export default Game;
+
+type ItemOptions = {
+  stage: Stage;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  type?: number;
+  location?: Map;
+  coord?: { x: number; y: number };
+  orientation?: number;
+  speed?: number;
+  frames?: number;
+};
+
+//活动对象构造
+class Item {
+  _params: ItemOptions;
+  _settings = {
+    x: 0,
+    y: 0,
+    width: 20,
+    height: 20,
+    type: 0,
+    color: "#F00",
+    status: 1,
+    orientation: 0,
+    speed: 0,
+
+    //地图相关
+    location: null,
+    coord: null,
+    path: [],
+    vector: null,
+
+    //布局相关
+    frames: 1,
+    times: 0,
+    timeout: 0,
+    control: {},
+    update: function () {},
+    draw: function () {}, //绘制
+  };
+  /** 标志符 */
+  _id: number = 0;
+  /** 与所属布景绑定 */
+  _stage: Stage;
+
+  constructor(params: ItemOptions) {
+    this._params = params || {};
+    this._stage = params.stage;
+
+    Object.assign(this, this._settings, this._params);
+  }
+}
