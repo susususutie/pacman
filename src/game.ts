@@ -9,136 +9,148 @@ class Game {
   /** 画布高度 */
   height: number;
   /** 事件集合 */
-  g_events: EventsMap = {}
+  g_events: EventsMap = {};
   /** 当前布景索引 */
   _index: number = 0;
+  /** 布景对象队列 */
+  _stages: Stage[] = [];
+  /** 帧动画控制 */
+  _hander?: number;
+  /**  */
+  canvas: HTMLCanvasElement;
+  /**  */
+  _context: CanvasRenderingContext2D;
 
   constructor(id: string, params?: GameOption) {
     const { width, height } = { width: 960, height: 640, ...params };
     this.width = width;
     this.height = height;
 
-    const thisGame = this;
-    const $canvas = document.querySelector<HTMLCanvasElement>(`#${id}`);
-    if (!$canvas) throw new Error("没有找到canvan元素");
+    const canvas = document.querySelector<HTMLCanvasElement>(`#${id}`);
+    if (!canvas) throw new Error("没有找到canvan元素");
 
-    $canvas.width = this.width;
-    $canvas.height = this.height;
-    const _context = $canvas.getContext("2d")!; //画布上下文环境
-    var _stages = []; //布景对象队列
-    var _hander; //帧动画控制
+    this.canvas = canvas;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this._context = this.canvas.getContext("2d")!; //画布上下文环境
+  }
 
-    
-    //动画开始
-    this.start = function () {
-      var f = 0; //帧数计算
-      var timestamp = new Date().getTime();
-      var fn = function () {
-        var now = new Date().getTime();
-        if (now - timestamp < 16) {
-          // 限频，防止高刷屏幕动画过快
-          _hander = requestAnimationFrame(fn);
-          return false;
-        }
-        timestamp = now;
-        var stage = _stages[_index];
-        _context.clearRect(0, 0, thisGame.width, thisGame.height); //清除画布
-        _context.fillStyle = "#000000";
-        _context.fillRect(0, 0, thisGame.width, thisGame.height);
-        f++;
-        if (stage.timeout) {
-          stage.timeout--;
-        }
-        if (stage.update() != false) {
-          //update返回false,则不绘制
-          stage.maps.forEach(function (map) {
-            if (!(f % map.frames)) {
-              map.times = f / map.frames; //计数器
-            }
-            if (map.cache) {
-              if (!map.imageData) {
-                _context.save();
-                map.draw(_context);
-                map.imageData = _context.getImageData(
-                  0,
-                  0,
-                  thisGame.width,
-                  thisGame.height
-                );
-                _context.restore();
-              } else {
-                _context.putImageData(map.imageData, 0, 0);
-              }
-            } else {
-              map.update();
-              map.draw(_context);
-            }
-          });
-          stage.items.forEach(function (item) {
-            if (!(f % item.frames)) {
-              item.times = f / item.frames; //计数器
-            }
-            if (stage.status == 1 && item.status != 2) {
-              //对象及布景状态都不处于暂停状态
-              if (item.location) {
-                item.coord = item.location.position2coord(item.x, item.y);
-              }
-              if (item.timeout) {
-                item.timeout--;
-              }
-              item.update();
-            }
-            item.draw(_context);
-          });
-        }
-        _hander = requestAnimationFrame(fn);
-      };
-      _hander = requestAnimationFrame(fn);
+  // 动画结束
+  stop() {
+    this._hander && cancelAnimationFrame(this._hander);
+  }
+
+  // 事件坐标
+  getPosition(e: MouseEvent) {
+    var box = this.canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - box.left * (this.width / box.width),
+      y: e.clientY - box.top * (this.height / box.height),
     };
-    //动画结束
-    this.stop = function () {
-      _hander && cancelAnimationFrame(_hander);
-    };
-    //事件坐标
-    this.getPosition = function (e) {
-      var box = $canvas.getBoundingClientRect();
-      return {
-        x: e.clientX - box.left * (thisGame.width / box.width),
-        y: e.clientY - box.top * (thisGame.height / box.height),
-      };
-    };
-    //创建布景
-    this.createStage = function (options) {
-      var stage = new Stage(this, options);
-      stage.index = _stages.length;
-      _stages.push(stage);
-      return stage;
-    };
-    //指定布景
-    this.setStage = function (index) {
-      _stages[_index].status = 0;
-      _index = index;
-      _stages[_index].status = 1;
-      _stages[_index].reset(); //重置
-      return _stages[_index];
-    };
-    //下个布景
-    this.nextStage = function () {
-      if (_index < _stages.length - 1) {
-        return this.setStage(++_index);
-      } else {
-        throw new Error("unfound new stage.");
+  }
+
+  // 创建布景
+  createStage(options: StageOptions) {
+    var stage = new Stage(this, options);
+    stage.index = this._stages.length;
+    this._stages.push(stage);
+    return stage;
+  }
+
+  // 指定布景
+  setStage(index: number) {
+    this._stages[this._index].status = 0;
+    this._index = index;
+    this._stages[this._index].status = 1;
+    this._stages[this._index].reset(); //重置
+    return this._stages[this._index];
+  }
+
+  // 下个布景
+  nextStage() {
+    if (this._index < this._stages.length - 1) {
+      return this.setStage(++this._index);
+    } else {
+      throw new Error("unfound new stage.");
+    }
+  }
+
+  // 获取布景列表
+  getStages() {
+    return this._stages;
+  }
+
+  // 初始化游戏引擎
+  init() {
+    this._index = 0;
+    this.start();
+  }
+
+  // 动画开始
+  start() {
+    let f = 0; //帧数计算
+    let timestamp = new Date().getTime();
+    const fn = () => {
+      var now = new Date().getTime();
+      if (now - timestamp < 16) {
+        // 限频，防止高刷屏幕动画过快
+        this._hander = requestAnimationFrame(fn);
+        return false;
       }
+      timestamp = now;
+      var stage = this._stages[this._index];
+      this._context.clearRect(0, 0, this.width, this.height); //清除画布
+      this._context.fillStyle = "#000000";
+      this._context.fillRect(0, 0, this.width, this.height);
+      f++;
+      if (stage.timeout) {
+        stage.timeout--;
+      }
+      if (stage.update && stage.update() !== false) {
+        //update返回false,则不绘制
+        stage.maps.forEach((map) => {
+          if (!(f % map.frames)) {
+            map.times = f / map.frames; //计数器
+          }
+          if (map.cache) {
+            if (!map.imageData) {
+              this._context.save();
+              map.draw(this._context);
+              map.imageData = this._context.getImageData(
+                0,
+                0,
+                this.width,
+                this.height
+              );
+              this._context.restore();
+            } else {
+              this._context.putImageData(map.imageData, 0, 0);
+            }
+          } else {
+            map.update();
+            map.draw(this._context);
+          }
+        });
+        stage.items.forEach((item) => {
+          if (!(f % item.frames)) {
+            item.times = f / item.frames; //计数器
+          }
+          if (stage.status == 1 && item.status != 2) {
+            //对象及布景状态都不处于暂停状态
+            if (item.location) {
+              item.coord = item.location.position2coord(item.x, item.y);
+            }
+            if (item.timeout) {
+              item.timeout--;
+            }
+            item?.update?.();
+          }
+          item?.draw?.(this._context);
+        });
+      }
+      this._hander = requestAnimationFrame(fn);
     };
-    //获取布景列表
-    this.getStages = function () {
-      return _stages;
-    };
-    //初始化游戏引擎
-    this.init = function () {
-      _index = 0;
-      this.start();
-    };
+    this._hander = requestAnimationFrame(fn);
   }
 }
 
@@ -204,8 +216,8 @@ class Item {
   speed: number = 0;
 
   //地图相关
-  location: Map;
-  coord: { x: number; y: number };
+  location?: Map;
+  coord?: { x: number; y: number };
   path: any[] = [];
   vector: any = null;
 
@@ -214,6 +226,8 @@ class Item {
   times: number = 0;
   timeout: number = 0;
   control = {};
+  update?: () => boolean;
+  draw?: (ctx: CanvasRenderingContext2D) => void;
 
   reset(): void {
     // const conf = {...this._settings, ...this._params};
@@ -260,7 +274,7 @@ class Map {
   update: Function = function () {};
   draw: Function = function () {}; //绘制地图
   imageData: ImageData | null = null;
-  
+
   _settings = {
     x: 0,
     y: 0,
@@ -419,10 +433,16 @@ class Map {
 
 type StageOptions = {};
 
-type EnvCallback<T extends keyof GlobalEventHandlersEventMap> = Record<`s_${number}`, (this: typeof Map, ev: GlobalEventHandlersEventMap[T]) => any>
-type EventsMap = {
-  [EnvType in keyof GlobalEventHandlersEventMap]?: Record<`s${number}`, (this: Stage, ev: GlobalEventHandlersEventMap[T]) => any>
-}
+type EnvCallback<T extends keyof GlobalEventHandlersEventMap> = Record<
+  `s_${number}`,
+  (this: typeof Map, ev: GlobalEventHandlersEventMap[T]) => any
+>;
+type EventsMap<T extends Stage> = {
+  [EnvType in keyof GlobalEventHandlersEventMap]?: Record<
+    `s${number}`,
+    (this: T, ev: GlobalEventHandlersEventMap[EnvType]) => any
+  >;
+};
 
 //布景对象构造器
 class Stage {
@@ -434,6 +454,7 @@ class Stage {
   images: any[] = [];
   items: Item[] = [];
   timeout: number = 0;
+  update?: () => boolean;
 
   _params: StageOptions;
   _settings = {
@@ -461,7 +482,7 @@ class Stage {
   createItem(options: Exclude<ItemOptions, "stage">) {
     let item = new Item({ ...options, stage: this });
     // 动态属性
-    if (item.location) {
+    if (item.location && item.coord) {
       const newLocation = item.location.coord2position(
         item.coord.x,
         item.coord.y
@@ -492,7 +513,7 @@ class Stage {
 
   // 获取对象列表
   getItemsByType(type: number) {
-    return this.items.filter(item => item.type == type);
+    return this.items.filter((item) => item.type == type);
   }
 
   // 添加地图
@@ -503,7 +524,7 @@ class Stage {
     map.y_length = map.data.length;
     map.x_length = map.data[0].length;
     map.imageData = null;
-    
+
     // 关系绑定
     map._stage = this;
     map._id = this.maps.length;
@@ -522,7 +543,7 @@ class Stage {
       map.imageData = null;
     });
   }
-  
+
   // 重置
   reset() {
     Object.assign(this, this._settings, this._params);
@@ -531,19 +552,23 @@ class Stage {
   }
 
   // 绑定事件
-  bind(eventType: keyof GlobalEventHandlersEventMap, callback: (this: typeof this, ev: GlobalEventHandlersEventMap[typeof eventType]) => any) {
+  bind(
+    eventType: keyof GlobalEventHandlersEventMap,
+    callback: (ev: GlobalEventHandlersEventMap[typeof eventType]) => any
+  ) {
     if (!this.game.g_events[eventType]) {
       this.game.g_events[eventType] = {};
-      window.addEventListener<typeof eventType>(eventType,  (e) => {
-        const key = "s" + this.game._index as `s${number}`;
+      window.addEventListener<typeof eventType>(eventType, (e) => {
+        const key = ("s" + this.game._index) as `s${number}`;
         const evnType = this.game.g_events[eventType];
-        if(evnType) {
-          const cback =  evnType[key];
-          cback.bind(this)(e)
+        if (evnType) {
+          const cback = evnType[key];
+          cback.bind(this)(e);
         }
         e.preventDefault();
       });
     }
-    this.game.g_events[eventType]![`s${this.index}`] = callback.bind(this); //绑定事件作用域
+    this.game.g_events[eventType]![`s${this.index}`] =
+      callback.bind<typeof this>(this); //绑定事件作用域
   }
 }
