@@ -1,4 +1,4 @@
-import Game from "./game";
+import Game from "./OldGame/Game";
 
 const _COIGIG = [
   //关卡
