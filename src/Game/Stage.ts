@@ -1,5 +1,5 @@
-export default //布景对象构造器
-class Stage {
+//布景对象构造器
+export default class Stage {
   constructor(params) {
     this._params = params || {};
     this._settings = {
