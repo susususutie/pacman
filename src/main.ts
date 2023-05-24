@@ -1,6 +1,6 @@
-import "./style.css";
+import './style.css';
 
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
+document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 <div class="game">
   <canvas id="canvas" width="960" height="640">不支持画布</canvas>
     <div class="info">
@@ -9,4 +9,4 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 </div>
 `;
 
-import("./index.js");
+import('./index.js');

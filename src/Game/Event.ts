@@ -29,7 +29,7 @@ export default class Event<EventName = string> implements EventPower<EventName> 
     emit(name: EventName, payload: any) {
         const handlers = this.#event_handlers.get(name);
         if (handlers) {
-            handlers.map((handler) => handler(payload));
+            handlers.map(handler => handler(payload));
         }
     }
 }

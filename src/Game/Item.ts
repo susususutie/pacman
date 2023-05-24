@@ -1,4 +1,4 @@
-import Event from "./Event";
+import Event from './Event';
 
 /** 0表示普通对象(不与地图绑定),1表示玩家控制对象,2表示程序控制对象 */
 enum ItemType {
@@ -53,7 +53,7 @@ class Item extends Event implements SizePower {
     //
     type: ItemType = ItemType.NORMAL;
     status: ItemStatus = ItemStatus.INIT;
-    color: string = "#FFF";
+    color: string = '#FFF';
     //
     orientation: Orientation = Orientation.RIGHT;
     speed: number = 0;
