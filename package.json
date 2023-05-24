@@ -12,7 +12,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "format": "prettier --write \"src/**/*\" --ignore-unknown",
-        "format:all": "prettier --write \"*.{js,cjs,ts,tsx,md,html,css,less,scss,json}\" --ignore-unknown"
+        "format:all": "prettier --write \"{*/**/*,*}.{js,cjs,ts,tsx,md,html,css,less,scss,json}\" --ignore-unknown"
     },
     "devDependencies": {
         "czg": "^1.4.1",
