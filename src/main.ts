@@ -8,5 +8,5 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </div>
 </div>
 `;
-
+// @ts-ignore
 import('./index.js');
