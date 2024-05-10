@@ -1,35 +1,35 @@
 export interface EventPower<EventName> {
-    on(name: EventName, handler: Function): void;
-    off(name: EventName, handler: Function): void;
-    emit(name: EventName, payload: any): void;
+  on(name: EventName, handler: Function): void;
+  off(name: EventName, handler: Function): void;
+  emit(name: EventName, payload: any): void;
 }
 
 export default class Event<EventName = string> implements EventPower<EventName> {
-    #event_handlers = new Map<EventName, Function[]>();
+  #event_handlers = new Map<EventName, Set<Function>>();
 
-    on(name: EventName, handler: Function) {
-        if (!this.#event_handlers.has(name)) {
-            this.#event_handlers.set(name, []);
-        }
-        const handlers = this.#event_handlers.get(name)!;
-        handlers.push(handler);
+  on(name: EventName, handler: Function) {
+    if (!this.#event_handlers.has(name)) {
+      this.#event_handlers.set(name, new Set());
     }
+    const handlers = this.#event_handlers.get(name)!;
+    handlers.add(handler);
+  }
 
-    off(name: EventName, handler: Function) {
-        const handlers = this.#event_handlers.get(name);
-        if (handlers) {
-            if (handler) {
-                handlers.splice(handlers.indexOf(handler) >>> 0, 1);
-            } else {
-                this.#event_handlers.set(name, []);
-            }
-        }
+  off(name: EventName, handler?: Function) {
+    const handlerSet = this.#event_handlers.get(name);
+    if (handlerSet) {
+      if (handler) {
+        handlerSet.delete(handler);
+      } else {
+        handlerSet.clear();
+      }
     }
+  }
 
-    emit(name: EventName, payload: any) {
-        const handlers = this.#event_handlers.get(name);
-        if (handlers) {
-            handlers.map(handler => handler(payload));
-        }
+  emit(name: EventName, payload: any) {
+    const handlerSet = this.#event_handlers.get(name);
+    if (handlerSet) {
+      handlerSet.forEach(handler => handler(payload));
     }
+  }
 }

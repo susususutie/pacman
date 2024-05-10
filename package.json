@@ -1,25 +1,25 @@
 {
-    "name": "pacman",
-    "private": true,
-    "version": "0.0.0",
-    "type": "module",
-    "scripts": {
-        "build": "tsc && vite build",
-        "coverage": "vitest run --coverage",
-        "cz": "git czg",
-        "dev": "vite",
-        "preview": "vite preview",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "format:src": "prettier --write \"src/**/*\" --ignore-unknown",
-        "format": "prettier --write \"{*/**/*,*}.{js,cjs,ts,tsx,md,html,css,less,scss,json}\" --ignore-unknown"
-    },
-    "devDependencies": {
-        "czg": "^1.9.1",
-        "prettier": "^3.2.5",
-        "typescript": "^5.4.5",
-        "vite": "^5.2.11",
-        "vitest": "^1.6.0"
-    },
-    "packageManager": "pnpm@9.1.0"
+  "name": "pacman",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build",
+    "coverage": "vitest run --coverage",
+    "cz": "git czg",
+    "dev": "vite",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format:src": "prettier --write \"src/**/*\" --ignore-unknown",
+    "format": "prettier --write \"{*/**/*,*}.{js,cjs,ts,tsx,md,html,css,less,scss,json}\" --ignore-unknown"
+  },
+  "devDependencies": {
+    "czg": "^1.9.1",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vitest": "^1.6.0"
+  },
+  "packageManager": "pnpm@9.1.0"
 }
