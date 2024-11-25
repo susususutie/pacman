@@ -70,4 +70,6 @@ class Game {
 }
 
 const game = new Game({ width: 200, height: 200 });
+(window as any).Game = Game;
+(window as any).game = game;
 console.log(game)
