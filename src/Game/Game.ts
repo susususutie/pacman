@@ -69,4 +69,5 @@ class Game {
   pause() {}
 }
 
-new Game({ width: 200, height: 200 });
+const game = new Game({ width: 200, height: 200 });
+console.log(game)
